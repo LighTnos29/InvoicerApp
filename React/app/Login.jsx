@@ -54,8 +54,11 @@ export default function LoginPage() {
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.registerLink}>
-        <Text style={styles.registerText}>Don't have an account? Sign up</Text>
+      <TouchableOpacity 
+        style={styles.registerLink} 
+        onPress={() => navigation.navigate('index')}  // Navigate to Login screen
+      >
+        <Text style={styles.registerText}>Don't have an account? Sign Up</Text>
       </TouchableOpacity>
     </View>
   );

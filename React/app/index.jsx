@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, CheckBox, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 const Register = () => {
+  const navigation = useNavigation();
   const [isGSTRegistered, setIsGSTRegistered] = useState(false);
   const [formData, setFormData] = useState({
     gstNo: '',
@@ -9,7 +11,10 @@ const Register = () => {
     address: '',
     pan: '',
     entityType: '',
+    email: '',
+    Password: ''
   });
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleInputChange = (name, value) => {
     setFormData({
@@ -18,37 +23,76 @@ const Register = () => {
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    setErrorMessage(''); // Reset error message on each submit attempt
     const dataToSubmit = {
       gstRegistered: isGSTRegistered,
+      email: formData.email,
       gstNo: formData.gstNo,
       traderName: formData.traderName,
       address: formData.address,
       pan: formData.pan,
       entityType: formData.entityType,
+      password: formData.Password
     };
+    try {
+      const response = await fetch('http://127.0.0.1:5000/api/signup', { 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataToSubmit),
+      });
 
-    fetch('/link', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(dataToSubmit),
-    })
+      const result = await response.json();
+
+      if (response.ok) {
+        navigation.navigate('Home', { user_id: result.user_id });
+      } else {
+        setErrorMessage(result.message); // Set error message if response not OK
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setErrorMessage("An error occurred. Please try again.");
+    }
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
       <Text style={styles.header}>Create Your Account</Text>
 
-      <View style={styles.checkboxContainer}>
-        <CheckBox
-          value={isGSTRegistered}
-          onValueChange={setIsGSTRegistered}
-          style={styles.checkbox}
+      {errorMessage ? (  // Display error message if present
+        <Text style={styles.errorText}>{errorMessage}</Text>
+      ) : null}
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Email:</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter Email"
+          value={formData.email}
+          onChangeText={(text) => handleInputChange('email', text)}
         />
-        <Text style={styles.checkboxLabel}>GST Registered</Text>
       </View>
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Password:</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter Password"
+          value={formData.Password}
+          onChangeText={(text) => handleInputChange('Password', text)}
+          secureTextEntry
+        />
+      </View>
+
+      <TouchableOpacity 
+        onPress={() => setIsGSTRegistered(!isGSTRegistered)} 
+        style={styles.checkboxContainer}
+      >
+        <View style={[styles.checkbox, isGSTRegistered && styles.checkboxChecked]} />
+        <Text style={styles.checkboxLabel}>GST Registered</Text>
+      </TouchableOpacity>
 
       {isGSTRegistered && (
         <View style={styles.inputContainer}>
@@ -105,17 +149,26 @@ const Register = () => {
       <TouchableOpacity onPress={handleSubmit} style={styles.button}>
         <Text style={styles.buttonText}>Register</Text>
       </TouchableOpacity>
-    </View>
+
+      <TouchableOpacity 
+        style={styles.registerLink} 
+        onPress={() => navigation.navigate('login')}
+      >
+        <Text style={styles.registerText}>Have an account? Sign in</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  // Main container for scrolling
+  scrollContainer: {
     flex: 1,
     backgroundColor: '#f2f5f9',
     padding: 24,
     justifyContent: 'center',
   },
+  // Header style
   header: {
     fontSize: 30,
     fontWeight: '700',
@@ -123,26 +176,43 @@ const styles = StyleSheet.create({
     marginBottom: 25,
     textAlign: 'center',
   },
+  // Checkbox container with flex direction
   checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
+    marginLeft: 10,
   },
+  // Checkbox style
   checkbox: {
-    marginRight: 10,
+    width: 24,
+    height: 24,
+    borderColor: '#e2e8f0',
+    borderWidth: 3,
+    borderRadius: 4,
+    marginRight: 10, // Ensures spacing next to label
   },
+  // Checked style for checkbox
+  checkboxChecked: {
+    backgroundColor: '#7e5be3', // Color when checked
+    borderColor: '#7e5be3', // Match border color with background when checked
+  },
+  // Checkbox label styling
   checkboxLabel: {
     fontSize: 16,
     color: '#3a3f47',
   },
+  // Input container style
   inputContainer: {
     marginBottom: 18,
   },
+  // Label style for inputs
   label: {
     fontSize: 14,
     color: '#5f6368',
     marginBottom: 5,
   },
+  // Input field styling
   input: {
     height: 55,
     borderColor: '#e2e8f0',
@@ -158,6 +228,7 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
   },
+  // Button styling
   button: {
     backgroundColor: '#7e5be3',
     borderRadius: 14,
@@ -169,12 +240,20 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 8,
   },
+  // Button text styling
   buttonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
     textAlign: 'center',
   },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    marginBottom: 15,
+    textAlign: 'center',
+  },
 });
+
 
 export default Register;

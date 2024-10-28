@@ -3,6 +3,7 @@
     "name": "invoicer-1",
     "slug": "invoicer-1",
     "version": "1.0.0",
+    "entryPoint": "./App.js",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
